@@ -1,7 +1,7 @@
 #!/bin/bash
 #= build ARM-Cross-compiler; because packages are mainstream.
 
-cd ~
+cd /root/
 mkdir crossCompiler && cd crossCompiler
 
 apt-get update
