@@ -1,26 +1,43 @@
 FROM ubuntu:12.04
 MAINTAINER Patrick Meyer <space@potential-terrorist.com>
 
-#= make sure the package repository is up to date
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
+RUN apt-get -y install vim # For debugging 
+
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y install wget
 
-#= install ARM-Cross-compiler
-RUN apt-get -y install python-software-properties
-RUN add-apt-repository -y ppa:bdrung/bsprak
-RUN apt-get -y install arm-elf-toolchain
+#= install ARM-Cross-compiler # Not in repo anymore??
+#RUN echo "deb http://ppa.launchpad.net/bdrung/ppa/ubuntu precise main" >> /etc/apt/sources.list
+#RUN gpg --keyserver pgpkeys.mit.edu --recv-key 02F53E15
+#RUN gpg -a --export 02F53E15 | apt-key add -
+#RUN apt-get update
+#RUN apt-get -y install arm-elf-toolchain
 
 #= build ARM-Cross-compiler; because packages are mainstream.
-#RUN apt-get -y install git
-#RUN git clone https://github.com/spaceSub/osmoBuild.git
-#RUN chmod +x /osmoBuild/gccArm.bash
-#RUN /osmoBuild/gccArm.bash
-#env PATH /root/crossCompiler/install/bin:$PATH
-#RUN ls /root/crossCompiler/install/bin
+RUN apt-get update
+RUN apt-get -y install build-essential libgmp3-dev libmpfr-dev libx11-6 libx11-dev texinfo flex bison libncurses5 libncurses5-dbg libncurses5-dev libncursesw5 libncursesw5-dbg libncursesw5-dev zlib1g-dev libmpfr4 libmpc-dev #zlibc 
+
+#== Get the source
+RUN mkdir /root/crossCompiler /root/crossCompiler/src /root/crossCompiler/install /root/crossCompiler/build
+RUN wget -P /root/crossCompiler/src http://ftp.gnu.org/gnu/gcc/gcc-4.5.2/gcc-4.5.2.tar.bz2
+RUN wget -P /root/crossCompiler/src http://ftp.gnu.org/gnu/binutils/binutils-2.21.1a.tar.bz2
+RUN wget -P /root/crossCompiler/src ftp://sources.redhat.com/pub/newlib/newlib-1.19.0.tar.gz
+
+#== Get the build Script
+RUN wget -P /root/crossCompiler http://bb.osmocom.org/trac/raw-attachment/wiki/GnuArmToolchain/gnu-arm-build.2.sh
+
+RUN sed 's/ROOT=.*/ROOT=\/root\/crossCompiler/g' /root/crossCompiler/gnu-arm-build.2.sh > /root/crossCompiler/gnu-arm-build.2.sh.mod
+RUN mv /root/crossCompiler/gnu-arm-build.2.sh.mod /root/crossCompiler/gnu-arm-build.2.sh # This is probably bogus. TODO: Can I do this with sed directly?
+RUN chmod +x /root/crossCompiler/gnu-arm-build.2.sh
+
+#== build
+RUN /root/crossCompiler/gnu-arm-build.2.sh
+
+ENV PATH /root/crossCompiler/install/bin:$PATH
+RUN ls /root/crossCompiler/install/bin
 
 #= build osmocomBB
-#RUN apt-get -y install libtool shtool autoconf git-core pkg-config make gcc
-#RUN git clone git://git.osmocom.org/osmocom-bb.git
-#CMD ./osmoBuild/build.bash
+RUN apt-get -y install libtool shtool autoconf git-core pkg-config make gcc
+RUN git clone git://git.osmocom.org/osmocom-bb.git
+CMD ./osmoBuild/build.bash
