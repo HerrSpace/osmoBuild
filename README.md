@@ -1,3 +1,4 @@
+<pre>
 osmoBuild
 =========
 
@@ -7,3 +8,4 @@ Just run the following and you are done:
 
 docker build -t="osmocomBBuild" .
 docker run -v `pwd`:/tmp/destination osmocomBBuild
+</pre>
